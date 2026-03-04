@@ -1,9 +1,9 @@
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import Chroma
 from langchain_community.embeddings import HuggingFaceEmbeddings
-from langchain_community.llms import OpenAI
-from langchain.chains import RetrievalQA
-from langchain.docstore.document import Document
+from langchain_community.chat_models import ChatOpenAI  # Changed from OpenAI
+from langchain_classic.chains import RetrievalQA
+from langchain_core.documents import Document
 import json
 
 class RAGChatbot:
@@ -47,12 +47,11 @@ class RAGChatbot:
     
     def setup_qa_chain(self):
         """Setup QA chain with LM Studio"""
-        from langchain_community.llms import OpenAI
-        
-        llm = OpenAI(
+        llm = ChatOpenAI(  # Changed from OpenAI to ChatOpenAI
             base_url=self.lm_studio_url,
-            api_key="not-needed",  # LM Studio doesn't require API key
-            temperature=0.7
+            api_key="not-needed",
+            temperature=0.7,
+            model="local-model"  # LM Studio requires a model name
         )
         
         self.qa_chain = RetrievalQA.from_chain_type(
@@ -67,8 +66,9 @@ class RAGChatbot:
         if not self.qa_chain:
             raise ValueError("QA chain not initialized. Run setup_qa_chain first.")
         
-        result = self.qa_chain({"query": question})
+        result = self.qa_chain.invoke({"query": question})  # Changed to .invoke()
         return {
             'answer': result['result'],
             'sources': [doc.metadata for doc in result['source_documents']]
         }
+    
