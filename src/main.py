@@ -4,9 +4,11 @@ import argparse
 
 def main():
     # Step 1: Collect data
-    print("Collecting research data...")
+    print("Collecting research data from local JSON file...")
     collector = ResearchDataCollector()
-    collector.fetch_arxiv_papers(query="machine learning", max_results=50)
+    # by default the collector reads data/raw/nuai_publications.json
+    collector.fetch_nuailab_publications()
+    # collector.fetch_arxiv_papers(query="machine learning", max_results=50)
     collector.save_data()
     print(f"Collected {len(collector.data)} papers")
     

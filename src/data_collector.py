@@ -8,19 +8,30 @@ class ResearchDataCollector:
         self.output_path = output_path
         self.data = []
     
-    def fetch_nuailab_publications(self, url='https://nuailab.com/data/publications.json'):
+    def fetch_nuailab_publications(self, source_path='data/raw/nuai_publications.json'):
         """
-        Fetch research publications from NuAILab JSON endpoint
-        
+        Load research publications from a JSON source.
+
+        The default behavior is to read the local file at
+        ``data/raw/nuai_publications.json``. If ``source_path`` starts with
+        ``http://`` or ``https://`` we will attempt to fetch it over the
+        network using ``requests``; otherwise we treat it as a filesystem
+        path and open it directly.
+
         Args:
-            url: URL to the publications JSON file
+            source_path: local file path or URL to the publications JSON file
         """
         try:
-            print(f"Fetching publications from {url}...")
-            response = requests.get(url, timeout=10)
-            response.raise_for_status()
-            
-            json_data = response.json()
+            if source_path.startswith(('http://', 'https://')):
+                print(f"Fetching publications from {source_path}...")
+                response = requests.get(source_path, timeout=10)
+                response.raise_for_status()
+                json_data = response.json()
+            else:
+                print(f"Reading publications from local file {source_path}...")
+                with open(source_path, 'r', encoding='utf-8') as f:
+                    json_data = json.load(f)
+
             publications = json_data.get('publications', [])
             
             print(f"Found {len(publications)} publications")
@@ -51,42 +62,42 @@ class ResearchDataCollector:
         except json.JSONDecodeError as e:
             print(f"Error parsing JSON: {e}")
     
-    def fetch_arxiv_papers(self, query: str, max_results: int = 50):
-        """
-        Fetch papers from arXiv (optional - for additional data sources)
+    # def fetch_arxiv_papers(self, query: str, max_results: int = 50):
+    #     """
+    #     Fetch papers from arXiv (optional - for additional data sources)
         
-        Args:
-            query: Search query for arXiv
-            max_results: Maximum number of results to fetch
-        """
-        try:
-            import arxiv
+    #     Args:
+    #         query: Search query for arXiv
+    #         max_results: Maximum number of results to fetch
+    #     """
+    #     try:
+    #         import arxiv
             
-            print(f"Fetching arXiv papers for query: '{query}'...")
-            search = arxiv.Search(
-                query=query,
-                max_results=max_results,
-                sort_by=arxiv.SortCriterion.SubmittedDate
-            )
+    #         print(f"Fetching arXiv papers for query: '{query}'...")
+    #         search = arxiv.Search(
+    #             query=query,
+    #             max_results=max_results,
+    #             sort_by=arxiv.SortCriterion.SubmittedDate
+    #         )
             
-            for result in search.results():
-                entry = {
-                    'title': result.title,
-                    'authors': ', '.join([author.name for author in result.authors]),
-                    'abstract': result.summary,
-                    'publication': 'arXiv',
-                    'year': str(result.published.year),
-                    'url': result.entry_id,
-                    'source': 'arXiv'
-                }
-                self.data.append(entry)
+    #         for result in search.results():
+    #             entry = {
+    #                 'title': result.title,
+    #                 'authors': ', '.join([author.name for author in result.authors]),
+    #                 'abstract': result.summary,
+    #                 'publication': 'arXiv',
+    #                 'year': str(result.published.year),
+    #                 'url': result.entry_id,
+    #                 'source': 'arXiv'
+    #             }
+    #             self.data.append(entry)
             
-            print(f"Successfully fetched {len([d for d in self.data if d['source'] == 'arXiv'])} arXiv papers")
+    #         print(f"Successfully fetched {len([d for d in self.data if d['source'] == 'arXiv'])} arXiv papers")
             
-        except ImportError:
-            print("arxiv library not installed. Run: pip install arxiv")
-        except Exception as e:
-            print(f"Error fetching arXiv data: {e}")
+    #     except ImportError:
+    #         print("arxiv library not installed. Run: pip install arxiv")
+    #     except Exception as e:
+    #         print(f"Error fetching arXiv data: {e}")
     
     def scrape_website(self, url: str, selector: str = None):
         """
