@@ -16,16 +16,49 @@ class RAGChatbot:
         self.qa_chain = None
     
     def load_documents(self, data_path='data/raw/research_data.json'):
-        """Load and prepare documents"""
+        """Load and prepare documents.
+
+        The JSON payload may not include an ``abstract`` key, so we
+        gracefully fall back to an empty string and still build a
+        document from the other available metadata (title, authors,
+        year, publication, url, etc.).  All of the metadata is preserved
+        on the ``Document`` so it can later be inspected if needed.
+        """
         with open(data_path, 'r') as f:
             data = json.load(f)
         
         documents = []
         for item in data:
-            content = f"Title: {item['title']}\n\nAbstract: {item['abstract']}"
+            title = item.get('title', 'Untitled')
+            abstract = item.get('abstract', '')  # may be missing
+            authors = item.get('authors', '')
+            year = item.get('year', '')
+            publication = item.get('publication', '')
+
+            # build a readable content string from whatever we have
+            parts = [f"Title: {title}"]
+            if authors:
+                parts.append(f"Authors: {authors}")
+            if year:
+                parts.append(f"Year: {year}")
+            if publication:
+                parts.append(f"Publication: {publication}")
+            if abstract:
+                parts.append(f"\nAbstract: {abstract}")
+
+            content = "\n".join(parts)
+
+            metadata = {
+                'title': title,
+                'url': item.get('url', ''),
+                'authors': authors,
+                'year': year,
+                'publication': publication,
+            }
+
             doc = Document(
                 page_content=content,
-                metadata={'title': item['title'], 'url': item.get('url', '')}
+                metadata=metadata
             )
             documents.append(doc)
         

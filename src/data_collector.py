@@ -203,11 +203,5 @@ if __name__ == "__main__":
     # Fetch NuAILab publications
     collector.fetch_nuailab_publications()
     
-    # Optional: Add more data from arXiv
-    # collector.fetch_arxiv_papers(query="neuromorphic computing", max_results=20)
-    
-    # Optional: Scrape additional websites
-    # collector.scrape_website("https://example.com/research", selector=".abstract")
-    
     # Save all collected data
     collector.save_data()
